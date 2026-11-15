@@ -5,28 +5,29 @@ public class Grid {
     private final int height = 8;
     private final int length = 12;
     private final int rockCount = 6;
+    private final String[] directions = new String[] {"East", "South", "West", "North"};
+    private final int[][] positionOils = new int[][]{{1,4}, {4,7}};
+    private final int[][] shoreWidths = new int[][]{{0,2}, {0,1}, {0,2}, {0,1}
+            , {0,1}, {0,1}, {0,2}, {3,3}};
     private static int index = 0;
+    private Random random = new Random();
     private char[][] map = new char[height][length];
     private int[] vesselPosition = {4,0};
-    private String[] directions = new String[] {"East", "South", "West", "North"};
     private String currentDirection = "East";
-    private ArrayList<oil> ListOils = new ArrayList<oil>();
-    private int[][] positionOils = new int[][]{{1,4}, {4,7}};
-    private int[][] shoreWidths = new int[][]{{0,2}, {0,1}, {0,2}, {0,1}
-            , {0,1}, {0,1}, {0,2}, {3,3}};
+    private ArrayList<oil> ListOils = new ArrayList<>();
 
     // Needs improvement //
     private void generateOilPatch(){
-        for(int i = 0; i < positionOils.length; i++){
-            ListOils.add(new oil(positionOils[i][0], positionOils[i][1], index++));
-            ListOils.add(new oil(positionOils[i][0], positionOils[i][1]+1, index++));
-            ListOils.add(new oil(positionOils[i][0]+1, positionOils[i][1], index++));
-            ListOils.add(new oil(positionOils[i][0]+1, positionOils[i][1]+1, index++));
-            ListOils.add(new oil(positionOils[i][0]+1, positionOils[i][1]+2, index++));
-            ListOils.add(new oil(positionOils[i][0]+2, positionOils[i][1]+1, index++));
+        for(int[] pos : positionOils){
+            ListOils.add(new oil(pos[0], pos[1], index++));
+            ListOils.add(new oil(pos[0], pos[1]+1, index++));
+            ListOils.add(new oil(pos[0]+1, pos[1], index++));
+            ListOils.add(new oil(pos[0]+1, pos[1]+1, index++));
+            ListOils.add(new oil(pos[0]+1, pos[1]+2, index++));
+            ListOils.add(new oil(pos[0]+2, pos[1]+1, index++));
         }
-        for(int i = 0; i < ListOils.size(); i++){
-            map[ListOils.get(i).getPosition()[0]][ListOils.get(i).getPosition()[1]] = 'o';
+        for(oil Oil : ListOils){
+            map[Oil.getPosition()[0]][Oil.getPosition()[1]] = 'o';
         }
     }
 
@@ -43,7 +44,6 @@ public class Grid {
     }
 
     private void generateRocks(){
-        Random random = new Random();
         int counter = rockCount;
         while(counter > 0){
             int r = random.nextInt(height);
@@ -56,7 +56,7 @@ public class Grid {
 
     private int getIndexDirection(String direction){
         for(int i = 0; i < directions.length; i++){
-            if(direction == directions[i]) return i;
+            if(direction.equals(directions[i])) return i;
         }
         return -1;
     }
@@ -67,6 +67,22 @@ public class Grid {
             ListOils.get(i).setIndex(i);
         }
     }
+
+    private void changeDirection(){
+        int num = random.nextInt(1000);
+        if(num % 2 == 0) return;
+        int ix = getIndexDirection(currentDirection);
+        if(num < 500){
+            ix--;
+            if(ix == -1) ix = 3;
+        }
+        else{
+            ix++;
+            if(ix == 4) ix = 0;
+        }
+        currentDirection = directions[ix];
+    }
+
     public Grid(){
         for(int i = 0; i < height; i++){
             for (int j = 0; j < length; j++){
@@ -80,54 +96,46 @@ public class Grid {
     }
 
     public void move(){
-        System.out.println(ListOils.size());
         ArrayList<oil> oilToMove = new ArrayList<>();
         ArrayList<oil> oilToShore = new ArrayList<>();
-        int[] direction;
-        switch (currentDirection){
-            case "East":
-                direction = new int[]{0,1};
-                break;
-            case "West":
-                direction = new int[]{0,-1};
-                break;
-            case "South":
-                direction = new int[]{-1,0};
-                break;
-            case "North":
-                direction = new int[]{1,0};
-                break;
-            default:
+        int[] direction = switch (currentDirection) {
+            case "East" -> new int[]{0, 1};
+            case "West" -> new int[]{0, -1};
+            case "South" -> new int[]{1, 0};
+            case "North" -> new int[]{-1, 0};
+            default -> {
                 System.out.println(" Error in the switch statement in the move() method - Direction: " + currentDirection);
-                direction = new int[]{0,0};
-                break;
-        }
-        for(int i = 0; i < ListOils.size(); i++){
-            int[] directNew = new int[]{direction[0] + ListOils.get(i).getPosition()[0],
-                    direction[1] + ListOils.get(i).getPosition()[1]};
+                yield new int[]{0, 0};
+            }
+        };
+        for(oil Oil : ListOils){
+            int[] directNew = new int[]{direction[0] + Oil.getPosition()[0],
+                    direction[1] + Oil.getPosition()[1]};
+            if(directNew[0] >= height || directNew[0] < 0 || directNew[1] >= length || directNew[1] < 0) continue;
             char cell = map[directNew[0]][directNew[1]];
             if(cell == '~'){
-                oilToMove.add(ListOils.get(i));
+                oilToMove.add(Oil);
                 continue;
             }
             if(cell == 'S' || cell == 'X'){
-                oilToShore.add(ListOils.get(i));
+                oilToShore.add(Oil);
             }
         }
-        for(int i = 0; i < oilToMove.size(); i++){
-            int[] oldPosition = new int[]{oilToMove.get(i).getPosition()[0],
-                    oilToMove.get(i).getPosition()[1]};
+        for(oil Oil : oilToMove){
+            int[] oldPosition = new int[]{Oil.getPosition()[0],
+                    Oil.getPosition()[1]};
             map[oldPosition[0]][oldPosition[1]] = '~';
-            oilToMove.get(i).setPosition(oldPosition[0] + direction[0], oldPosition[1] + direction[1]);
+            Oil.setPosition(oldPosition[0] + direction[0], oldPosition[1] + direction[1]);
             map[oldPosition[0] + direction[0]][oldPosition[1] + direction[1]] = 'o';
         }
-        for(int i = 0; i < oilToShore.size(); i++){
-            int[] oldPosition = new int[]{oilToShore.get(i).getPosition()[0],
-                    oilToShore.get(i).getPosition()[1]};
+        for(oil Oil : oilToShore){
+            int[] oldPosition = new int[]{Oil.getPosition()[0],
+                    Oil.getPosition()[1]};
             map[oldPosition[0]][oldPosition[1]] = '~';
             map[oldPosition[0] + direction[0]][oldPosition[1] + direction[1]] = 'X';
-            clearOil(oilToShore.get(i).getIndex());
+            clearOil(Oil.getIndex());
         }
+        changeDirection();
     }
 
     public void view(){
@@ -137,5 +145,6 @@ public class Grid {
             }
             System.out.println();
         }
+        System.out.println(currentDirection);
     }
 }
