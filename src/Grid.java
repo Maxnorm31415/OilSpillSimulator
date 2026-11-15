@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Grid {
     private final int height = 8;
@@ -10,6 +12,7 @@ public class Grid {
     private final int[][] shoreWidths = new int[][]{{0,2}, {0,1}, {0,2}, {0,1}
             , {0,1}, {0,1}, {0,2}, {3,3}};
     private static int index = 0;
+    private int oilCollected = 0;
     private Random random = new Random();
     private char[][] map = new char[height][length];
     private int[] vesselPosition = {4,0};
@@ -61,7 +64,19 @@ public class Grid {
         return -1;
     }
 
+    private int getIndexOil(int r, int c){
+        for (oil Oil : ListOils){
+            if(r == Oil.getPosition()[0] && c == Oil.getPosition()[1]) return Oil.getIndex();
+        }
+        return -1;
+    }
+
     private void clearOil(int ix){
+        if(ix == -1){
+            System.out.println("Error: Oil has coordinates but no index");
+            return;
+        }
+        map[ListOils.get(ix).getPosition()[0]][ListOils.get(ix).getPosition()[1]] = '~';
         ListOils.remove(ix);
         for(int i = ix; i < ListOils.size(); i++){
             ListOils.get(i).setIndex(i);
@@ -83,13 +98,29 @@ public class Grid {
         currentDirection = directions[ix];
     }
 
+    private int collectOil(){
+        int collected = 0;
+        final int[][] radar = new int[][]{{0,1}, {0,-1}, {1,0}, {-1,0}, {0,0}};
+        for(int[] pos : radar){
+            int[] checkPosition = new int[]{vesselPosition[0] + pos[0], vesselPosition[1] + pos[1]};
+            if(checkPosition[0] < 0 || checkPosition[0] >= height
+            || checkPosition[1] >= length || checkPosition[1]< 0) continue;
+            char cell = map[checkPosition[0]][checkPosition[1]];
+            if(cell == 'o'){
+                clearOil(getIndexOil(checkPosition[0], checkPosition[1]));
+                collected++;
+                oilCollected++;
+            }
+        }
+        return collected;
+    }
+
     public Grid(){
         for(int i = 0; i < height; i++){
             for (int j = 0; j < length; j++){
                 map[i][j] = '~';
             }
         }
-        map[vesselPosition[0]][vesselPosition[1]] = 'V';
         generateOilPatch();
         generateShore();
         generateRocks();
@@ -131,20 +162,91 @@ public class Grid {
         for(oil Oil : oilToShore){
             int[] oldPosition = new int[]{Oil.getPosition()[0],
                     Oil.getPosition()[1]};
-            map[oldPosition[0]][oldPosition[1]] = '~';
             map[oldPosition[0] + direction[0]][oldPosition[1] + direction[1]] = 'X';
             clearOil(Oil.getIndex());
         }
         changeDirection();
     }
 
+    public void vesselMove(){
+        Scanner scan = new Scanner(System.in);
+        String act;
+        String nameDirect = "None";
+        int direct = -1;
+        loop1:
+        while (direct == -1) {
+            System.out.print("Direction (N/E/S/W): ");
+            act = scan.nextLine();
+            act = act.toLowerCase();
+            switch (act){
+                case "n":
+                    direct = 0;
+                    nameDirect = "north";
+                    break;
+                case "s":
+                    direct = 0;
+                    nameDirect = "south";
+                    break;
+                case "e":
+                    direct = 1;
+                    nameDirect = "east";
+                    break;
+                case "w":
+                    direct = 1;
+                    nameDirect = "west";
+                    break;
+                default:
+                    System.out.println("Invalid input. Please enter N(n), E(e), S(s), or W(w)");
+                    break;
+            };
+        }
+        int moveDistance = -1;
+        while (true){
+            System.out.print("Number of cells: ");
+            try {
+                moveDistance = scan.nextInt();
+                if(moveDistance < 1 || moveDistance > 4) throw new Exception();
+            }
+            catch (Exception e){
+                System.out.println("Please enter a number between 1 and 4");
+                scan.nextLine();
+                continue;
+            }
+            break;
+        }
+        int[] pos = new int[]{0,0};
+        String stopMessage = "The vessel cannot sail " + nameDirect + ": ";
+        int step = 1;
+        if(nameDirect.equals("north") || nameDirect.equals("west")) step = -1;
+        for(int i = step; Math.abs(i) <= moveDistance; i+=step){
+            pos[direct] = i;
+            int[] positionNew = new int[]{vesselPosition[0] + pos[0], vesselPosition[1] + pos[1]};
+            if(positionNew[0] >= height || positionNew[0] < 0 || positionNew[1] >= length || positionNew[1] < 0){
+                System.out.println(stopMessage + "the edge of the board is in the way");
+                pos[direct] -= step;
+                break;
+            }
+            char cell = map[positionNew[0]][positionNew[1]];
+            if(cell == 'S' || cell == 'R' || cell == '#' || cell == 'X'){
+                System.out.println(stopMessage + ": There is an obstacle in the way");
+                pos[direct] -= step;
+                break;
+            }
+        }
+        vesselPosition[0] += pos[0];
+        vesselPosition[1] += pos[1];
+        int clld = collectOil();
+        System.out.println("The vessel is at (" + vesselPosition[0] + "," + vesselPosition[1]
+                + ") and skimmed " + clld + " oil cell(s).");
+    }
+
     public void view(){
         for(int i = 0; i < height; i++){
             for (int j = 0; j < length; j++){
-                System.out.print(map[i][j] + " ");
+                if(i == vesselPosition[0] && j == vesselPosition[1]) System.out.print("V ");
+                else System.out.print(map[i][j] + " ");
             }
             System.out.println();
         }
-        System.out.println(currentDirection);
     }
 }
