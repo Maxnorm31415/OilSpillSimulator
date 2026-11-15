@@ -1,6 +1,11 @@
 
 
-public static void main(String[] args) {
+public static void main(String[] args) throws InterruptedException {
     Grid start = new Grid();
-    start.view();
+    while (true) {
+        start.view();
+        start.move();
+        System.out.println("==============================");
+        Thread.sleep(1000);
+    }
 }
