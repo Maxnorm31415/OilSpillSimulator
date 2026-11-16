@@ -13,6 +13,8 @@ public class Grid {
             , {0,1}, {0,1}, {0,2}, {3,3}};
     private static int index = 0;
     private int oilCollected = 0;
+    private int barriersLeft = 5;
+    private int totalOils = 0;
     private Random random = new Random();
     private char[][] map = new char[height][length];
     private int[] vesselPosition = {4,0};
@@ -32,6 +34,7 @@ public class Grid {
         for(oil Oil : ListOils){
             map[Oil.getPosition()[0]][Oil.getPosition()[1]] = 'o';
         }
+        totalOils = ListOils.size();
     }
 
     // Needs improvement //
@@ -168,6 +171,70 @@ public class Grid {
         changeDirection();
     }
 
+    public boolean gameover(){
+        if(ListOils.isEmpty()){
+            System.out.println("=== Game over: no more oil at sea ===");
+            view();
+            System.out.println("Oil recovered: " + oilCollected + " of " + totalOils
+                    + " | Oil washed ashore: " + (totalOils - oilCollected));
+            System.out.println("Score: " + oilCollected);
+            return true;
+        }
+        else return false;
+    }
+
+    public void getInfo(){
+        System.out.println("Current: " + currentDirection + " | Oil at sea: " + ListOils.size() + " | Barriers left: "
+                + barriersLeft + " | Vessel at (" + vesselPosition[0] + "," + vesselPosition[1] + ") | Oil collected: " + oilCollected);
+    }
+    public boolean placeBarrier(){
+        if(barriersLeft == 0){
+            System.out.println("You have no barriers left");
+            return false;
+        }
+        Scanner scan = new Scanner(System.in);
+        int r = -1;
+        int c = -1;
+        while (true){
+            try {
+                if(r == -1){
+                    System.out.print("Barrier row: ");
+                    r = scan.nextInt();
+                    if(r < 0 || r >= height) {
+                        r = -1;
+                        throw new Exception("Please enter a number between 0 and " + height);
+                    }
+                }
+                if(c == -1){
+                    System.out.print("Barrier col: ");
+                    c = scan.nextInt();
+                    if(c < 0 || c >= length) {
+                        c = -1;
+                        throw new Exception("Please enter a number between 0 and " + length);
+                    }
+                }
+                char cell = map[r][c];
+                if(cell == '~')  break;
+                else {
+                    System.out.println("Barriers can only be placed on clean water, away from the vessel");
+                    return false;
+                }
+
+            }
+            catch (InputMismatchException k){
+                System.out.println("Text input is not allowed. Please enter numbers only.");
+                scan.nextLine();
+            }
+            catch (Exception e){
+                System.out.println(e.getMessage());
+                scan.nextLine();
+            }
+        }
+        map[r][c] = '#';
+        barriersLeft--;
+        System.out.println("Barrier placed at (" + r + "," + c + ").");
+        return true;
+    }
     public void vesselMove(){
         Scanner scan = new Scanner(System.in);
         String act;
