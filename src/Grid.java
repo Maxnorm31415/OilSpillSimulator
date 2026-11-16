@@ -214,7 +214,7 @@ public class Grid {
                     }
                 }
                 char cell = map[r][c];
-                if(cell == '~' && (vesselPosition[0] != r && vesselPosition[1] != c))  break;
+                if(cell == '~' && (vesselPosition[0] != r || vesselPosition[1] != c))  break;
                 else {
                     System.out.println("Barriers can only be placed on clean water, away from the vessel");
                     return false;
