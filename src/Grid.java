@@ -202,7 +202,7 @@ public class Grid {
                     r = scan.nextInt();
                     if(r < 0 || r >= height) {
                         r = -1;
-                        throw new Exception("Please enter a number between 0 and " + height);
+                        throw new Exception("Please enter a number between 0 and " + (height-1));
                     }
                 }
                 if(c == -1){
@@ -210,11 +210,11 @@ public class Grid {
                     c = scan.nextInt();
                     if(c < 0 || c >= length) {
                         c = -1;
-                        throw new Exception("Please enter a number between 0 and " + length);
+                        throw new Exception("Please enter a number between 0 and " + (length-1));
                     }
                 }
                 char cell = map[r][c];
-                if(cell == '~')  break;
+                if(cell == '~' && (vesselPosition[0] != r && vesselPosition[1] != c))  break;
                 else {
                     System.out.println("Barriers can only be placed on clean water, away from the vessel");
                     return false;
@@ -240,7 +240,6 @@ public class Grid {
         String act;
         String nameDirect = "None";
         int direct = -1;
-        loop1:
         while (direct == -1) {
             System.out.print("Direction (N/E/S/W): ");
             act = scan.nextLine();
@@ -265,9 +264,9 @@ public class Grid {
                 default:
                     System.out.println("Invalid input. Please enter N(n), E(e), S(s), or W(w)");
                     break;
-            };
+            }
         }
-        int moveDistance = -1;
+        int moveDistance;
         while (true){
             System.out.print("Number of cells: ");
             try {
@@ -289,13 +288,13 @@ public class Grid {
             pos[direct] = i;
             int[] positionNew = new int[]{vesselPosition[0] + pos[0], vesselPosition[1] + pos[1]};
             if(positionNew[0] >= height || positionNew[0] < 0 || positionNew[1] >= length || positionNew[1] < 0){
-                System.out.println(stopMessage + "the edge of the board is in the way");
+                System.out.println(stopMessage + "The edge of the board is in the way");
                 pos[direct] -= step;
                 break;
             }
             char cell = map[positionNew[0]][positionNew[1]];
             if(cell == 'S' || cell == 'R' || cell == '#' || cell == 'X'){
-                System.out.println(stopMessage + ": There is an obstacle in the way");
+                System.out.println(stopMessage + "There is an obstacle in the way");
                 pos[direct] -= step;
                 break;
             }
@@ -308,9 +307,12 @@ public class Grid {
     }
 
     public void view(){
-        for(int i = 0; i < height; i++){
+        System.out.print(" ");
+        for(int i = -1; i < height; i++){
+            if(i != -1) System.out.print(i + " ");
             for (int j = 0; j < length; j++){
-                if(i == vesselPosition[0] && j == vesselPosition[1]) System.out.print("V ");
+                if(i == -1) System.out.print(" " + j);
+                else if(i == vesselPosition[0] && j == vesselPosition[1]) System.out.print("V ");
                 else System.out.print(map[i][j] + " ");
             }
             System.out.println();
