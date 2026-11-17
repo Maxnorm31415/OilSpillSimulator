@@ -87,9 +87,11 @@ public class Grid {
         while(counter > 0){
             int r = random.nextInt(height);
             int c = random.nextInt(length);
-            if(map[r][c] != '~') continue;
-            map[r][c] = 'R';
-            counter--;
+            // Rocks are placed only on clean water and not on the vessel's starting cell:
+            if(map[r][c] == '~' && (vesselPosition[0] != r || vesselPosition[1] != c)) {
+                map[r][c] = 'R';
+                counter--;
+            }
         }
     }
 
